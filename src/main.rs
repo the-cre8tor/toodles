@@ -53,31 +53,24 @@ fn run(mut terminal: DefaultTerminal, state: &mut AppState) -> Result<()> {
                     FormAction::Submit => {
                         state.is_add_new = false;
 
-                        let mut indicator = state.items.len() + 1;
+                        let mut last_item_number = state.items.len() + 1;
 
                         if state.items.len() > 0 {
-                            if let Some(item) = state.items.last() {
-                                let denote: Vec<&str> = item.description.split(".").collect();
-
-                                if let Some(u) = denote.get(0).cloned() {
-                                    let number: usize = match u.parse() {
-                                        Ok(value) => value,
-                                        Err(_) => 0,
-                                    };
-
-                                    indicator = number + 1;
-                                }
-                            }
+                            last_item_number = indicator_reminder(state);
                         }
 
                         let task = TodoItem {
                             is_done: false,
-                            description: format!("{}. {}", indicator, state.input_value.clone()),
+                            description: format!(
+                                "{}. {}",
+                                last_item_number,
+                                state.input_value.clone()
+                            ),
                         };
 
                         state.items.push(task);
                         state.input_value.clear();
-                        state.list_state.select(Some(indicator));
+                        state.list_state.select(Some(last_item_number));
                     }
                     FormAction::Escape => {
                         state.is_add_new = false;
@@ -94,6 +87,23 @@ fn run(mut terminal: DefaultTerminal, state: &mut AppState) -> Result<()> {
     }
 
     Ok(())
+}
+
+fn indicator_reminder(state: &mut AppState) -> usize {
+    if let Some(item) = state.items.last() {
+        let denote: Vec<&str> = item.description.split(".").collect();
+
+        if let Some(item_number) = denote.get(0).cloned() {
+            let number: usize = match item_number.parse() {
+                Ok(value) => value,
+                Err(_) => 0,
+            };
+
+            return number + 1;
+        }
+    }
+
+    return state.items.len();
 }
 
 fn add_new_hander(key: KeyEvent, state: &mut AppState) -> FormAction {
